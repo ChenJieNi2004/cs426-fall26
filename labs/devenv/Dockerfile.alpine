@@ -1,40 +1,54 @@
-FROM golang:1.23-alpine
+# Smaller Alpine-based development environment (2026)
+FROM golang:1.27.1-alpine
 
 ARG USER=nonroot
 ENV HOME=/home/$USER
+ENV PATH="/usr/local/go/bin:${HOME}/go/bin:${PATH}"
 
-# install sudo as root
-RUN apk add sudo
+# Install shell, development, container, Kubernetes, and protobuf tools.
+RUN apk add --no-cache \
+    bash \
+    curl \
+    docker-bash-completion \
+    docker-cli \
+    docker-cli-buildx \
+    docker-cli-compose \
+    docker-zsh-completion \
+    emacs \
+    gcc \
+    git \
+    kubectl \
+    kubectl-bash-completion \
+    kubectl-zsh-completion \
+    kubectx \
+    kubectx-bash-completion \
+    kubectx-zsh-completion \
+    libgcc \
+    make \
+    musl-dev \
+    protobuf \
+    sudo \
+    vim \
+    zsh
 
-# Install bash, git, and other packages
-RUN apk add --no-cache bash zsh git protobuf make curl vim emacs
-RUN apk add --no-cache gcc musl-dev libgcc
-RUN apk add --no-cache kubectl kubectx kubectl-bash-completion kubectx-bash-completion kubectl-zsh-completion kubectx-zsh-completion
-RUN apk add --no-cache docker-cli docker-cli-compose docker-cli-buildx docker-bash-completion docker-zsh-completion
-
-# add new user (ref: https://wiki.alpinelinux.org/wiki/Setting_up_a_new_user#Options)
-RUN adduser -D $USER \
-    && echo "$USER ALL=(ALL) NOPASSWD: ALL" > /etc/sudoers.d/$USER \
-    && chmod 0440 /etc/sudoers.d/$USER
+# Add an unprivileged development user with passwordless sudo.
+RUN adduser -D "$USER" \
+    && echo "$USER ALL=(ALL) NOPASSWD: ALL" > "/etc/sudoers.d/$USER" \
+    && chmod 0440 "/etc/sudoers.d/$USER"
 
 USER $USER
 WORKDIR $HOME
 
-RUN sudo rm -rf ${HOME}/.cache
+# Go development tools (Sep 2026).
+RUN go install golang.org/x/tools/cmd/goimports@v0.50.0 \
+    && go install golang.org/x/tools/gopls@v0.23.0 \
+    && go install honnef.co/go/tools/cmd/staticcheck@v0.7.0 \
+    && go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@v1.6.2 \
+    && go install google.golang.org/protobuf/cmd/protoc-gen-go@v1.36.11
 
-# Install Go tools at specific version (Aug 2024)
-RUN go install golang.org/x/tools/cmd/godoc@v0.24.0
-RUN go install golang.org/x/tools/cmd/goimports@v0.24.0
-RUN go install golang.org/x/tools/gopls@v0.16.1
-RUN go install honnef.co/go/tools/cmd/staticcheck@v0.5.1
+# Retained for compatibility with existing course workflows.
+RUN go install golang.org/x/tools/cmd/godoc@v0.1.0-deprecated
 
-# Install gRPC and protobuf plugins for Go (Aug 2024)
-RUN go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@v1.5.1 \
-    && go install google.golang.org/protobuf/cmd/protoc-gen-go@v1.34.2
-
-ENV PATH="/usr/local/go/bin:${PATH}"
-RUN echo 'export PATH=$PATH:/usr/local/go/bin' >> ~/.profile
-
-# Build: `docker build -f Dockerfile.alpine -t my-dev-env .`
-# Start the container: `docker run -it -v myhomedir:/home/nonroot my-dev-env`
+# Build: docker build -f Dockerfile.alpine -t ghcr.io/yryang/cs426-fall26-devenv:latest .
+# Start: docker run -it -v myhomedir:/home/nonroot ghcr.io/yryang/cs426-fall26-devenv:latest /bin/bash
 CMD ["bash"]

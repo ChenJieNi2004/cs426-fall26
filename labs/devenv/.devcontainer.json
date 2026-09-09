@@ -1,6 +1,6 @@
 {
   "name": "CS426: Go Development",
-  "image": "git.cs426.cloud/labs/devenv:latest",
+  "image": "ghcr.io/yryang/cs426-fall26-devenv:latest",
   "dockerFile": "devenv/Dockerfile",
   "containerUser": "nonroot",
   "remoteUser": "nonroot",
