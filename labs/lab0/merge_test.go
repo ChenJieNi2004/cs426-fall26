@@ -107,5 +107,35 @@ func TestMergeFetches(t *testing.T) {
 }
 
 func TestMergeFetchesAdditional(t *testing.T) {
-	// TODO: add your extra tests here
+	t.Run("empty a channel", func(t *testing.T) {
+		a := make(chan string)
+		b := make(chan string, 2)
+		out := make(chan string, 2)
+
+		b <- "1"
+		b <- "2"
+
+		close(a)
+		close(b)
+
+		lab0.MergeFetches(newChannelFetcher(a), newChannelFetcher(b), out)
+		require.ElementsMatch(t, []string{"1", "2"}, chanToSlice(out))
+	})
+
+	t.Run("a has less elements than b", func(t *testing.T) {
+		a := make(chan string, 1)
+		b := make(chan string, 4)
+		out := make(chan string, 5)
+
+		a <- "a"
+		b <- "1"
+		b <- "2"
+		b <- "1"
+		b <- "2"
+		close(a)
+		close(b)
+
+		lab0.MergeFetches(newChannelFetcher(a), newChannelFetcher(b), out)
+		require.ElementsMatch(t, []string{"a", "1", "2", "1", "2"}, chanToSlice(out))
+	})
 }

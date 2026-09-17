@@ -5,15 +5,17 @@ package lab0
 // expected to fail or overwrite existing entries.
 type Queue[T any] struct {
 	// Add your fields here
+	list []T;
 }
 
 // NewQueue returns a new queue which is empty.
 func NewQueue[T any]() *Queue[T] {
-	return nil
+	return make([]T)
 }
 
 // Push adds an item to the end of the queue.
 func (q *Queue[T]) Push(t T) {
+	
 }
 
 // Pop removes an item from the beginning of the queue
